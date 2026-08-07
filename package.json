@@ -1,0 +1,20 @@
+{
+  "name": "com.zenoxzx.celestia",
+  "version": "0.1.0",
+  "displayName": "Celestia",
+  "description": "Time of day simulation with physically derived sun and moon positioning. A single world clock drives directional lights, shadow handover between sun and moon, horizon fading and post processing. Works without the Universal Render Pipeline; post processing compiles only when URP is present.",
+  "unity": "6000.3",
+  "category": "Rendering",
+  "keywords": [
+    "time",
+    "day-night",
+    "sun",
+    "moon",
+    "lighting",
+    "sky"
+  ],
+  "author": {
+    "name": "Aygün Özgür",
+    "url": "https://github.com/ZenoxZX"
+  }
+}

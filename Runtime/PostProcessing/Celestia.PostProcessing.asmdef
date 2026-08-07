@@ -1,0 +1,26 @@
+{
+    "name": "Celestia.PostProcessing",
+    "rootNamespace": "Celestia.PostProcessing",
+    "references": [
+        "Celestia.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "CELESTIA_URP"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "",
+            "define": "CELESTIA_URP"
+        }
+    ],
+    "noEngineReferences": false
+}

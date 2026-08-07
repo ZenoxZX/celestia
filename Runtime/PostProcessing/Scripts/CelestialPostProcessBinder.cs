@@ -38,8 +38,7 @@ namespace Celestia.PostProcessing
         {
             if (m_Handler == null)
             {
-                Debug.LogError(
-                    $"{nameof(CelestialPostProcessBinder)} on '{name}' has no handler assigned.", this);
+                Debug.LogError($"{nameof(CelestialPostProcessBinder)} on '{name}' has no handler assigned.", this);
                 return;
             }
 
@@ -58,24 +57,29 @@ namespace Celestia.PostProcessing
 
             ReleaseRuntimeProfile();
 
-            if (m_Handler == null) return;
+            if (m_Handler == null)
+                return;
+
             m_Handler.StateChanged -= OnStateChanged;
         }
 
-        private void OnDestroy()
-        {
-            ReleaseRuntimeProfile();
-        }
+        private void OnDestroy() => ReleaseRuntimeProfile();
 
         public void Apply(CelestialState state)
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying)
+                return;
 
             CelestialPreset preset = m_Handler != null ? m_Handler.Preset : null;
-            if (preset == null) return;
 
-            if (!m_HasResolved || NeedsMissingOverride()) ResolveOverrides();
-            if (!m_HasProfile) return;
+            if (preset == null)
+                return;
+
+            if (!m_HasResolved || NeedsMissingOverride())
+                ResolveOverrides();
+
+            if (!m_HasProfile)
+                return;
 
             float phase = state.SkyPhase;
 
@@ -85,8 +89,11 @@ namespace Celestia.PostProcessing
 
         private bool NeedsMissingOverride()
         {
-            if (!m_AddMissingOverrides) return false;
-            if (m_RuntimeProfile == null) return false;
+            if (!m_AddMissingOverrides)
+                return false;
+
+            if (m_RuntimeProfile == null)
+                return false;
 
             return m_WhiteBalance == null || m_ColorAdjustments == null;
         }
@@ -99,15 +106,19 @@ namespace Celestia.PostProcessing
             m_HasResolved = false;
             m_HasProfile = false;
 
-            if (!isActiveAndEnabled) return;
+            if (!isActiveAndEnabled)
+                return;
 
             ResolveOverrides();
-            if (m_Handler != null) Apply(m_Handler.State);
+
+            if (m_Handler != null)
+                Apply(m_Handler.State);
         }
 
         private void ApplyWhiteBalance(CelestialPreset preset, float phase)
         {
-            if (m_WhiteBalance == null) return;
+            if (m_WhiteBalance == null)
+                return;
 
             m_WhiteBalance.active = true;
             m_WhiteBalance.temperature.overrideState = true;
@@ -118,7 +129,8 @@ namespace Celestia.PostProcessing
 
         private void ApplyColorAdjustments(CelestialPreset preset, float phase)
         {
-            if (m_ColorAdjustments == null) return;
+            if (m_ColorAdjustments == null)
+                return;
 
             m_ColorAdjustments.active = true;
             m_ColorAdjustments.postExposure.overrideState = true;
@@ -137,12 +149,12 @@ namespace Celestia.PostProcessing
         private VolumeProfile AcquireProfile()
         {
             VolumeProfile source = m_ResolvedVolume.sharedProfile;
-            if (source == null) return null;
+
+            if (source == null)
+                return null;
 
             if (m_RuntimeProfile != null && m_ResolvedVolume.sharedProfile == m_RuntimeProfile)
-            {
                 return m_RuntimeProfile;
-            }
 
             ReleaseRuntimeProfile();
 
@@ -164,12 +176,12 @@ namespace Celestia.PostProcessing
             }
 
             if (m_ResolvedVolume != null && m_ResolvedVolume.sharedProfile == m_RuntimeProfile)
-            {
                 m_ResolvedVolume.sharedProfile = m_SourceProfile;
-            }
 
-            if (Application.isPlaying) Destroy(m_RuntimeProfile);
-            else DestroyImmediate(m_RuntimeProfile);
+            if (Application.isPlaying)
+                Destroy(m_RuntimeProfile);
+            else
+                DestroyImmediate(m_RuntimeProfile);
 
             m_RuntimeProfile = null;
             m_SourceProfile = null;
@@ -186,9 +198,7 @@ namespace Celestia.PostProcessing
 
             if (m_ResolvedVolume == null)
             {
-                Debug.LogError(
-                    $"{nameof(CelestialPostProcessBinder)} on '{name}' has no Volume assigned " +
-                    "and none on this GameObject.", this);
+                Debug.LogError($"{nameof(CelestialPostProcessBinder)} on '{name}' has no Volume assigned and none on this GameObject.", this);
                 return;
             }
 
@@ -196,8 +206,7 @@ namespace Celestia.PostProcessing
 
             if (profile == null)
             {
-                Debug.LogError(
-                    $"{nameof(CelestialPostProcessBinder)} on '{name}' has no volume profile.", this);
+                Debug.LogError($"{nameof(CelestialPostProcessBinder)} on '{name}' has no volume profile.", this);
                 return;
             }
 
@@ -207,29 +216,32 @@ namespace Celestia.PostProcessing
             m_HasProfile = m_WhiteBalance != null || m_ColorAdjustments != null;
         }
 
-        private T ResolveOverride<T>(VolumeProfile profile)
-            where T : VolumeComponent
+        private T ResolveOverride<T>(VolumeProfile profile) where T : VolumeComponent
         {
-            if (profile.TryGet(out T existing)) return existing;
-            if (!m_AddMissingOverrides) return null;
+            if (profile.TryGet(out T existing))
+                return existing;
+
+            if (!m_AddMissingOverrides)
+                return null;
 
             T added = profile.Add<T>();
             added.active = true;
+
             return added;
         }
 
-        private void OnStateChanged(CelestialState state)
-        {
-            Apply(state);
-        }
+        private void OnStateChanged(CelestialState state) => Apply(state);
 
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            if (!isActiveAndEnabled) return;
+            if (!isActiveAndEnabled)
+                return;
 
             m_HasResolved = false;
-            if (m_Handler != null) Apply(m_Handler.State);
+
+            if (m_Handler != null)
+                Apply(m_Handler.State);
         }
 #endif
     }

@@ -23,8 +23,7 @@ namespace Celestia
             remove => Engine.StateChanged -= value;
         }
 
-        public CelestialState State =>
-            Application.isPlaying ? Engine.State : m_EditorState;
+        public CelestialState State => Application.isPlaying ? Engine.State : m_EditorState;
 
         public CelestialPreset Preset
         {

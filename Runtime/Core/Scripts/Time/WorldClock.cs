@@ -42,11 +42,8 @@ namespace Celestia
         }
 
         public float DayProgress => (float)m_Progress;
-
         public TimeOfDay Time => TimeOfDay.FromProgress((float)m_Progress);
-
         public int DayCount => m_DayCount;
-
         public bool IsRunning => m_IsRunning;
 
         public float TimeScale
@@ -63,7 +60,8 @@ namespace Celestia
 
         public void Play()
         {
-            if (m_IsRunning) return;
+            if (m_IsRunning)
+                return;
 
             m_IsRunning = true;
             CacheBoundaries();
@@ -72,7 +70,8 @@ namespace Celestia
 
         public void Pause()
         {
-            if (!m_IsRunning) return;
+            if (!m_IsRunning)
+                return;
 
             m_IsRunning = false;
             RunStateChanged?.Invoke(false);
@@ -80,36 +79,38 @@ namespace Celestia
 
         public void Toggle()
         {
-            if (m_IsRunning) Pause();
-            else Play();
+            if (m_IsRunning)
+                Pause();
+            else
+                Play();
         }
 
         public void Tick(float deltaSeconds)
         {
-            if (!m_IsRunning || deltaSeconds <= 0f) return;
-            if (m_TimeScale <= 0f) return;
+            if (!m_IsRunning || deltaSeconds <= 0f)
+                return;
+
+            if (m_TimeScale <= 0f)
+                return;
 
             double dayFraction = deltaSeconds * m_TimeScale / m_RealSecondsPerDay;
-            if (dayFraction <= 0d) return;
+
+            if (dayFraction <= 0d)
+                return;
 
             Advance(dayFraction);
         }
 
         public void StepSeconds(float seconds)
         {
-            if (seconds == 0f) return;
+            if (seconds == 0f)
+                return;
+
             Advance(seconds / (double)TimeOfDay.SecondsPerDay);
         }
 
-        public void StepMinutes(float minutes)
-        {
-            StepSeconds(minutes * TimeOfDay.SecondsPerMinute);
-        }
-
-        public void StepHours(float hours)
-        {
-            StepSeconds(hours * TimeOfDay.SecondsPerHour);
-        }
+        public void StepMinutes(float minutes) => StepSeconds(minutes * TimeOfDay.SecondsPerMinute);
+        public void StepHours(float hours) => StepSeconds(hours * TimeOfDay.SecondsPerHour);
 
         public void SetProgress(float progress, TimeChangeMode mode = TimeChangeMode.Resync)
         {
@@ -130,16 +131,9 @@ namespace Celestia
             Resynced?.Invoke((float)m_Progress);
         }
 
-        public void SetTime(TimeOfDay time, TimeChangeMode mode = TimeChangeMode.Resync)
-        {
-            SetProgress(time.Progress, mode);
-        }
-
-        public void SetTime(int hour, int minute, int second = 0,
-                            TimeChangeMode mode = TimeChangeMode.Resync)
-        {
-            SetProgress(new TimeOfDay(hour, minute, second).Progress, mode);
-        }
+        public void SetTime(TimeOfDay time, TimeChangeMode mode = TimeChangeMode.Resync) => SetProgress(time.Progress, mode);
+        public void SetTime(int hour, int minute, int second = 0, TimeChangeMode mode = TimeChangeMode.Resync)
+            => SetProgress(new TimeOfDay(hour, minute, second).Progress, mode);
 
         private void Advance(double dayFraction)
         {
@@ -156,12 +150,12 @@ namespace Celestia
             m_Progress = target;
             ProgressChanged?.Invoke((float)m_Progress);
 
-            Advanced?.Invoke(new ClockAdvance(
-                from, m_Progress, dayFraction, Math.Max(0, dayRollovers)));
+            Advanced?.Invoke(new(from, m_Progress, dayFraction, Math.Max(0, dayRollovers)));
 
             EmitBoundaryEvents(dayFraction);
 
-            if (dayRollovers <= 0) return;
+            if (dayRollovers <= 0)
+                return;
 
             for (int i = 0; i < dayRollovers; i++)
             {
@@ -191,28 +185,24 @@ namespace Celestia
 
             int startSeconds = m_LastSecond >= 0 ? m_LastSecond : Time.TotalSeconds;
 
-            EmitUnitBoundaries(hasSecondListener, elapsedSeconds, startSeconds,
-                1, k_MaxSecondEventsPerTick, SecondChanged);
-
-            EmitUnitBoundaries(hasMinuteListener, elapsedSeconds, startSeconds,
-                TimeOfDay.SecondsPerMinute, k_MaxMinuteEventsPerTick, MinuteChanged);
-
-            EmitUnitBoundaries(hasHourListener, elapsedSeconds, startSeconds,
-                TimeOfDay.SecondsPerHour, k_MaxHourEventsPerTick, HourChanged);
+            EmitUnitBoundaries(hasSecondListener, elapsedSeconds, startSeconds, 1, k_MaxSecondEventsPerTick, SecondChanged);
+            EmitUnitBoundaries(hasMinuteListener, elapsedSeconds, startSeconds, TimeOfDay.SecondsPerMinute, k_MaxMinuteEventsPerTick, MinuteChanged);
+            EmitUnitBoundaries(hasHourListener, elapsedSeconds, startSeconds, TimeOfDay.SecondsPerHour, k_MaxHourEventsPerTick, HourChanged);
 
             CacheBoundaries();
         }
 
-        private static void EmitUnitBoundaries(bool hasListener, int elapsedSeconds, int startSeconds,
-                                               int unitSeconds, int maxEvents,
-                                               Action<TimeOfDay> callback)
+        private static void EmitUnitBoundaries(bool hasListener, int elapsedSeconds, int startSeconds, int unitSeconds, int maxEvents, Action<TimeOfDay> callback)
         {
-            if (!hasListener) return;
+            if (!hasListener)
+                return;
 
             int firstBoundary = startSeconds / unitSeconds + 1;
             int lastBoundary = (startSeconds + elapsedSeconds) / unitSeconds;
             int count = lastBoundary - firstBoundary + 1;
-            if (count <= 0) return;
+
+            if (count <= 0)
+                return;
 
             if (count > maxEvents)
             {
@@ -221,9 +211,7 @@ namespace Celestia
             }
 
             for (int i = firstBoundary; i <= lastBoundary; i++)
-            {
                 callback.Invoke(TimeOfDay.FromSeconds(i * unitSeconds));
-            }
         }
 
         private void CacheBoundaries()

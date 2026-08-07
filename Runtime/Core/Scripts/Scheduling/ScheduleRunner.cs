@@ -30,7 +30,8 @@ namespace Celestia
 
         public void Bind()
         {
-            if (m_Bound || m_Clock == null) return;
+            if (m_Bound || m_Clock == null)
+                return;
 
             for (int i = 0; i < m_Schedules.Count; i++)
             {
@@ -45,7 +46,8 @@ namespace Celestia
 
         public void Unbind()
         {
-            if (!m_Bound) return;
+            if (!m_Bound)
+                return;
 
             m_Clock.Advanced -= OnAdvanced;
             m_Clock.Resynced -= OnResynced;
@@ -54,58 +56,34 @@ namespace Celestia
 
         public CelestialSchedule Add(CelestialSchedule schedule)
         {
-            if (schedule == null) return null;
+            if (schedule == null)
+                return null;
 
             m_Schedules.Add(schedule);
 
-            if (m_Clock == null) return schedule;
+            if (m_Clock == null)
+                return schedule;
 
             schedule.ResetState();
             schedule.Prime(m_Clock.DayProgress, m_ResolveSkyEvent);
+
             return schedule;
         }
 
-        public CelestialSchedule At(TimeOfDay time, Action action)
-        {
-            return Add(CelestialSchedule.At(time, action));
-        }
-
-        public CelestialSchedule At(int hour, int minute, Action action)
-        {
-            return Add(CelestialSchedule.At(hour, minute, action));
-        }
-
-        public CelestialSchedule On(SkyEvent skyEvent, Action action)
-        {
-            return Add(CelestialSchedule.On(skyEvent, action));
-        }
-
-        public CelestialSchedule Between(TimeOfDay start, TimeOfDay end,
-                                         Action entered, Action exited = null)
-        {
-            return Add(CelestialSchedule.Between(start, end, entered, exited));
-        }
-
-        public CelestialSchedule Every(ScheduleInterval interval, Action action)
-        {
-            return Add(CelestialSchedule.Every(interval, action));
-        }
-
-        public bool Remove(CelestialSchedule schedule)
-        {
-            return m_Schedules.Remove(schedule);
-        }
-
-        public void Clear()
-        {
-            m_Schedules.Clear();
-        }
+        public CelestialSchedule At(TimeOfDay time, Action action) => Add(CelestialSchedule.At(time, action));
+        public CelestialSchedule At(int hour, int minute, Action action) => Add(CelestialSchedule.At(hour, minute, action));
+        public CelestialSchedule On(SkyEvent skyEvent, Action action) => Add(CelestialSchedule.On(skyEvent, action));
+        public CelestialSchedule Between(TimeOfDay start, TimeOfDay end, Action entered, Action exited = null) => Add(CelestialSchedule.Between(start, end, entered, exited));
+        public CelestialSchedule Every(ScheduleInterval interval, Action action) => Add(CelestialSchedule.Every(interval, action));
+        public bool Remove(CelestialSchedule schedule) => m_Schedules.Remove(schedule);
+        public void Clear() => m_Schedules.Clear();
 
         public CelestialSchedule Find(string label)
         {
             for (int i = 0; i < m_Schedules.Count; i++)
             {
-                if (m_Schedules[i].Label == label) return m_Schedules[i];
+                if (m_Schedules[i].Label == label)
+                    return m_Schedules[i];
             }
 
             return null;

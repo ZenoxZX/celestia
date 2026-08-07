@@ -46,12 +46,9 @@ namespace Celestia.VContainer
                 .AsSelf();
         }
 
-        private WorldClock CreateClock()
+        private WorldClock CreateClock() => new(m_Config.RealSecondsPerDay, m_Config.StartProgress, false)
         {
-            return new WorldClock(m_Config.RealSecondsPerDay, m_Config.StartProgress, false)
-            {
-                TimeScale = m_Config.TimeScale
-            };
-        }
+            TimeScale = m_Config.TimeScale
+        };
     }
 }

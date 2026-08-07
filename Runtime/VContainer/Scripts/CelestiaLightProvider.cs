@@ -1,9 +1,11 @@
 using System;
+using JetBrains.Annotations;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace Celestia.VContainer
 {
+    [UsedImplicitly]
     public sealed class CelestiaLightProvider : ICelestiaLightProvider, IDisposable
     {
         private const float k_DefaultSunIntensity = 3f;
@@ -43,7 +45,8 @@ namespace Celestia.VContainer
 
         void IDisposable.Dispose()
         {
-            if (m_Owned == null) return;
+            if (m_Owned == null)
+                return;
 
             if (Application.isPlaying) Object.Destroy(m_Owned);
             else Object.DestroyImmediate(m_Owned);
@@ -56,20 +59,21 @@ namespace Celestia.VContainer
 
         private void Resolve()
         {
-            if (m_Resolved) return;
+            if (m_Resolved)
+                return;
+
             m_Resolved = true;
 
             m_SunLight = m_Config.SunLight;
             m_MoonLight = m_Config.MoonLight;
 
-            if (m_SunLight != null && m_MoonLight != null) return;
+            if (m_SunLight != null && m_MoonLight != null)
+                return;
 
-            m_Owned = new GameObject(m_Config.GeneratedLightsName);
+            m_Owned = new(m_Config.GeneratedLightsName);
 
             if (m_Config.DontDestroyGeneratedLights && Application.isPlaying)
-            {
                 Object.DontDestroyOnLoad(m_Owned);
-            }
 
             m_SunLight ??= CreateLight("Sun Light", k_DefaultSunIntensity);
             m_MoonLight ??= CreateLight("Moon Light", k_DefaultMoonIntensity);
@@ -77,7 +81,7 @@ namespace Celestia.VContainer
 
         private Light CreateLight(string lightName, float intensity)
         {
-            var go = new GameObject(lightName);
+            GameObject go = new(lightName);
             go.transform.SetParent(m_Owned.transform, false);
 
             Light light = go.AddComponent<Light>();

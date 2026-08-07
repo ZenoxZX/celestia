@@ -1,9 +1,11 @@
 using System;
+using JetBrains.Annotations;
 using UnityEngine;
 using VContainer.Unity;
 
 namespace Celestia.VContainer
 {
+    [UsedImplicitly]
     public sealed class CelestiaRuntime : IStartable, ITickable, IDisposable
     {
         private readonly CelestiaConfig m_Config;
@@ -15,10 +17,10 @@ namespace Celestia.VContainer
         private CelestialLightRig m_Rig;
 
         public CelestiaRuntime(CelestiaConfig config,
-                               WorldClock clock,
-                               CelestialEngine engine,
-                               ScheduleRunner runner,
-                               ICelestiaLightProvider lights)
+            WorldClock clock,
+            CelestialEngine engine,
+            ScheduleRunner runner,
+            ICelestiaLightProvider lights)
         {
             m_Config = config;
             m_Clock = clock;

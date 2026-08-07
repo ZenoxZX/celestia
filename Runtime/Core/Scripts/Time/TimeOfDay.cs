@@ -26,13 +26,9 @@ namespace Celestia
         }
 
         public int Hour => m_Hour;
-
         public int Minute => m_Minute;
-
         public int Second => m_Second;
-
         public int TotalSeconds => m_Hour * SecondsPerHour + m_Minute * SecondsPerMinute + m_Second;
-
         public float Progress => (float)TotalSeconds / SecondsPerDay;
 
         public static TimeOfDay FromProgress(float progress)
@@ -48,51 +44,21 @@ namespace Celestia
             return new TimeOfDay(0, 0, wrapped);
         }
 
-        public static TimeOfDay FromHours(float hours)
-        {
-            return FromProgress(hours / HoursPerDay);
-        }
+        public static TimeOfDay FromHours(float hours) => FromProgress(hours / HoursPerDay);
 
-        public bool Equals(TimeOfDay other)
-        {
-            return TotalSeconds == other.TotalSeconds;
-        }
+        public bool Equals(TimeOfDay other) => TotalSeconds == other.TotalSeconds;
+        public override bool Equals(object obj) => obj is TimeOfDay other && Equals(other);
+        public override int GetHashCode() => TotalSeconds;
+        public int CompareTo(TimeOfDay other) => TotalSeconds.CompareTo(other.TotalSeconds);
 
-        public override bool Equals(object obj)
-        {
-            return obj is TimeOfDay other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            return TotalSeconds;
-        }
-
-        public int CompareTo(TimeOfDay other)
-        {
-            return TotalSeconds.CompareTo(other.TotalSeconds);
-        }
-
-        public override string ToString()
-        {
-            return $"{m_Hour:00}:{m_Minute:00}:{m_Second:00}";
-        }
-
-        public string ToShortString()
-        {
-            return $"{m_Hour:00}:{m_Minute:00}";
-        }
+        public override string ToString() => $"{m_Hour:00}:{m_Minute:00}:{m_Second:00}";
+        public string ToShortString() => $"{m_Hour:00}:{m_Minute:00}";
 
         public static bool operator ==(TimeOfDay a, TimeOfDay b) => a.Equals(b);
-
         public static bool operator !=(TimeOfDay a, TimeOfDay b) => !a.Equals(b);
-
         public static bool operator <(TimeOfDay a, TimeOfDay b) => a.TotalSeconds < b.TotalSeconds;
-
         public static bool operator >(TimeOfDay a, TimeOfDay b) => a.TotalSeconds > b.TotalSeconds;
-
         public static bool operator <=(TimeOfDay a, TimeOfDay b) => a.TotalSeconds <= b.TotalSeconds;
-
         public static bool operator >=(TimeOfDay a, TimeOfDay b) => a.TotalSeconds >= b.TotalSeconds;
 
         private static int WrapSeconds(int seconds)

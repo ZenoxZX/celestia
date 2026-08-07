@@ -23,9 +23,12 @@ namespace Celestia
             DaysElapsed = daysElapsed;
         }
 
+        public bool WrappedMidnight => DaysElapsed > 0 || To < From;
+
         public int CountBoundaries(double unitsPerDay)
         {
-            if (m_Delta <= 0d || unitsPerDay <= 0d) return 0;
+            if (m_Delta <= 0d || unitsPerDay <= 0d)
+                return 0;
 
             double start = m_From * unitsPerDay;
             double end = start + m_Delta * unitsPerDay;
@@ -34,21 +37,24 @@ namespace Celestia
             return steps > 0 ? steps : 0;
         }
 
-        public bool WrappedMidnight => DaysElapsed > 0 || To < From;
-
         public bool Covers(float progress)
         {
-            if (Delta <= 0f) return false;
-            if (Delta >= 1f) return true;
+            if (Delta <= 0f)
+                return false;
+
+            if (Delta >= 1f)
+                return true;
 
             float wrapped = Mathf.Repeat(progress, 1f);
 
-            if (From <= To) return wrapped > From && wrapped <= To;
+            if (From <= To)
+                return wrapped > From && wrapped <= To;
 
             // Crossed midnight: the day boundary itself was passed, so a target
             // sitting exactly on 0 counts even though it is never strictly
             // greater than From.
-            if (wrapped <= 0f) return true;
+            if (wrapped <= 0f)
+                return true;
 
             return wrapped > From || wrapped <= To;
         }

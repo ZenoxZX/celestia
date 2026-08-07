@@ -11,11 +11,11 @@ namespace Celestia
         [SerializeField] private bool m_Enabled = true;
         [SerializeField] private ScheduleTrigger m_Trigger = ScheduleTrigger.TimeOfDay;
 
-        [SerializeField] private TimeOfDay m_Time = new TimeOfDay(19, 42);
+        [SerializeField] private TimeOfDay m_Time = new(19, 42);
         [SerializeField] private SkyEvent m_SkyEvent = SkyEvent.Sunset;
 
-        [SerializeField] private TimeOfDay m_RangeStart = new TimeOfDay(19, 0);
-        [SerializeField] private TimeOfDay m_RangeEnd = new TimeOfDay(6, 0);
+        [SerializeField] private TimeOfDay m_RangeStart = new(19, 0);
+        [SerializeField] private TimeOfDay m_RangeEnd = new(6, 0);
 
         [SerializeField] private ScheduleInterval m_Interval = ScheduleInterval.EveryHour;
 
@@ -25,8 +25,8 @@ namespace Celestia
         [Tooltip("For ranges: fire Entered on enable if the clock already sits inside the range.")]
         [SerializeField] private bool m_CatchUpOnEnable = true;
 
-        [SerializeField] private UnityEvent m_Triggered = new UnityEvent();
-        [SerializeField] private UnityEvent m_Exited = new UnityEvent();
+        [SerializeField] private UnityEvent m_Triggered = new();
+        [SerializeField] private UnityEvent m_Exited = new();
 
         private bool m_Fired;
         private bool m_Inside;
@@ -37,47 +37,6 @@ namespace Celestia
 
         public CelestialSchedule()
         {
-        }
-
-        public static CelestialSchedule At(TimeOfDay time, Action action = null)
-        {
-            var schedule = Create(ScheduleTrigger.TimeOfDay, action);
-            schedule.m_Time = time;
-            schedule.m_Label = time.ToShortString();
-            return schedule;
-        }
-
-        public static CelestialSchedule At(int hour, int minute, Action action = null)
-        {
-            return At(new TimeOfDay(hour, minute), action);
-        }
-
-        public static CelestialSchedule On(SkyEvent skyEvent, Action action = null)
-        {
-            var schedule = Create(ScheduleTrigger.SkyEvent, action);
-            schedule.m_SkyEvent = skyEvent;
-            schedule.m_Label = skyEvent.ToString();
-            return schedule;
-        }
-
-        public static CelestialSchedule Between(TimeOfDay start, TimeOfDay end,
-                                                Action entered = null, Action exited = null)
-        {
-            var schedule = Create(ScheduleTrigger.TimeRange, entered);
-            schedule.m_RangeStart = start;
-            schedule.m_RangeEnd = end;
-            schedule.m_Label = $"{start.ToShortString()} - {end.ToShortString()}";
-
-            if (exited != null) schedule.Left += exited;
-            return schedule;
-        }
-
-        public static CelestialSchedule Every(ScheduleInterval interval, Action action = null)
-        {
-            var schedule = Create(ScheduleTrigger.Interval, action);
-            schedule.m_Interval = interval;
-            schedule.m_Label = interval.ToString();
-            return schedule;
         }
 
         public string Label
@@ -105,22 +64,54 @@ namespace Celestia
         }
 
         public ScheduleTrigger Trigger => m_Trigger;
-
         public TimeOfDay Time => m_Time;
-
         public SkyEvent SkyEvent => m_SkyEvent;
-
         public TimeOfDay RangeStart => m_RangeStart;
-
         public TimeOfDay RangeEnd => m_RangeEnd;
-
         public ScheduleInterval Interval => m_Interval;
-
         public bool IsInside => m_Inside;
-
         public UnityEvent Triggered => m_Triggered;
-
         public UnityEvent Exited => m_Exited;
+
+        public static CelestialSchedule At(TimeOfDay time, Action action = null)
+        {
+            CelestialSchedule schedule = Create(ScheduleTrigger.TimeOfDay, action);
+            schedule.m_Time = time;
+            schedule.m_Label = time.ToShortString();
+            return schedule;
+        }
+
+        public static CelestialSchedule At(int hour, int minute, Action action = null) => At(new(hour, minute), action);
+
+        public static CelestialSchedule On(SkyEvent skyEvent, Action action = null)
+        {
+            CelestialSchedule schedule = Create(ScheduleTrigger.SkyEvent, action);
+            schedule.m_SkyEvent = skyEvent;
+            schedule.m_Label = skyEvent.ToString();
+            return schedule;
+        }
+
+        public static CelestialSchedule Between(TimeOfDay start, TimeOfDay end, Action entered = null, Action exited = null)
+        {
+            CelestialSchedule schedule = Create(ScheduleTrigger.TimeRange, entered);
+            schedule.m_RangeStart = start;
+            schedule.m_RangeEnd = end;
+            schedule.m_Label = $"{start.ToShortString()} - {end.ToShortString()}";
+
+            if (exited != null)
+                schedule.Left += exited;
+
+            return schedule;
+        }
+
+        public static CelestialSchedule Every(ScheduleInterval interval, Action action = null)
+        {
+            CelestialSchedule schedule = Create(ScheduleTrigger.Interval, action);
+            schedule.m_Interval = interval;
+            schedule.m_Label = interval.ToString();
+
+            return schedule;
+        }
 
         public void ResetState()
         {
@@ -152,8 +143,11 @@ namespace Celestia
 
         public void Evaluate(in ClockAdvance advance, Func<SkyEvent, float> resolveSkyEvent)
         {
-            if (!m_Enabled) return;
-            if (m_Once && m_Fired) return;
+            if (!m_Enabled)
+                return;
+
+            if (m_Once && m_Fired)
+                return;
 
             switch (m_Trigger)
             {
@@ -177,8 +171,11 @@ namespace Celestia
 
         private void EvaluateInstant(in ClockAdvance advance, float progress)
         {
-            if (progress < 0f) return;
-            if (!advance.Covers(progress)) return;
+            if (progress < 0f)
+                return;
+
+            if (!advance.Covers(progress))
+                return;
 
             Fire();
         }
@@ -186,25 +183,22 @@ namespace Celestia
         private void EvaluateInterval(in ClockAdvance advance)
         {
             int steps = advance.CountBoundaries(UnitsPerDay(m_Interval));
+
             for (int i = 0; i < steps; i++)
             {
                 Fire();
-                if (m_Once) return;
+
+                if (m_Once)
+                    return;
             }
         }
 
-        private static double UnitsPerDay(ScheduleInterval interval)
+        private static double UnitsPerDay(ScheduleInterval interval) => interval switch
         {
-            switch (interval)
-            {
-                case ScheduleInterval.EveryMinute:
-                    return TimeOfDay.MinutesPerHour * TimeOfDay.HoursPerDay;
-                case ScheduleInterval.EveryHour:
-                    return TimeOfDay.HoursPerDay;
-                default:
-                    return 1.0;
-            }
-        }
+            ScheduleInterval.EveryMinute => TimeOfDay.MinutesPerHour * TimeOfDay.HoursPerDay,
+            ScheduleInterval.EveryHour => TimeOfDay.HoursPerDay,
+            _ => 1.0
+        };
 
         private void EvaluateRange(in ClockAdvance advance)
         {
@@ -217,12 +211,15 @@ namespace Celestia
                 return;
             }
 
-            if (nowInside == m_Inside) return;
+            if (nowInside == m_Inside)
+                return;
 
             m_Inside = nowInside;
 
-            if (nowInside) Fire();
-            else Exit();
+            if (nowInside)
+                Fire();
+            else
+                Exit();
         }
 
         private bool IsWithinRange(float progress)
@@ -231,16 +228,22 @@ namespace Celestia
             float end = m_RangeEnd.Progress;
             float value = Mathf.Repeat(progress, 1f);
 
-            if (Mathf.Approximately(start, end)) return true;
-            if (start < end) return value >= start && value < end;
+            if (Mathf.Approximately(start, end))
+                return true;
+
+            if (start < end)
+                return value >= start && value < end;
 
             return value >= start || value < end;
         }
 
         private static CelestialSchedule Create(ScheduleTrigger trigger, Action action)
         {
-            var schedule = new CelestialSchedule { m_Trigger = trigger };
-            if (action != null) schedule.Fired += action;
+            CelestialSchedule schedule = new() { m_Trigger = trigger };
+
+            if (action != null)
+                schedule.Fired += action;
+
             return schedule;
         }
 

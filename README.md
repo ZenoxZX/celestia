@@ -4,10 +4,25 @@ Time of day simulation for Unity. A single clock drives physically derived sun
 and moon positions, which in turn drive directional lights, shadow handover and
 post processing.
 
-## Requirements
+## Installation (Package Manager — Git URL)
 
-- Unity 6000.3 or newer
-- Universal Render Pipeline (optional — only needed for post processing)
+1. Open **Window → Package Manager**.
+2. Click **+** → **Add package from git URL...** and add Celestia:
+   ```
+   https://github.com/ZenoxZX/celestia.git
+   ```
+
+The repository root is the package root, so no `?path=` suffix is needed.
+
+Or declare it directly in `Packages/manifest.json`:
+
+```json
+"com.zenoxzx.celestia": "https://github.com/ZenoxZX/celestia.git"
+```
+
+The package has no dependencies. Post processing support compiles itself in
+when the Universal Render Pipeline is present and stays out of the build when
+it is not, so nothing has to be installed first.
 
 ## Getting started
 
@@ -98,3 +113,12 @@ horizon. Intensity fades as a body approaches the horizon, and a light at zero
 intensity is disabled outright so it costs no shadow work.
 
 Moon intensity is scaled by illumination, so a new moon goes dark on its own.
+
+## Requirements
+
+- Unity 6000.3 or newer
+- Universal Render Pipeline — optional, only needed for post processing
+
+## License
+
+MIT — see [LICENSE.md](LICENSE.md).

@@ -114,6 +114,10 @@ namespace Celestia
         private void Awake()
         {
             m_Clock ??= CreateClock();
+
+            // Claimed in Awake, not OnEnable: another component's OnEnable may
+            // run first and would otherwise find no active clock.
+            if (s_Active == null) s_Active = this;
         }
 
         private void OnEnable()

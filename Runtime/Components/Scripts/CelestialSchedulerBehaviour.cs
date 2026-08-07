@@ -32,11 +32,16 @@ namespace Celestia
                 return;
             }
 
-            m_Runner = new ScheduleRunner(clock, m_Handler);
-
-            for (int i = 0; i < m_Schedules.Count; i++)
+            // Built once. Rebuilding here would drop schedules added from
+            // code while the component was disabled.
+            if (m_Runner == null)
             {
-                m_Runner.Add(m_Schedules[i]);
+                m_Runner = new ScheduleRunner(clock, m_Handler);
+
+                for (int i = 0; i < m_Schedules.Count; i++)
+                {
+                    m_Runner.Add(m_Schedules[i]);
+                }
             }
 
             m_Runner.Bind();
@@ -45,7 +50,6 @@ namespace Celestia
         private void OnDisable()
         {
             m_Runner?.Unbind();
-            m_Runner = null;
         }
 
         public CelestialSchedule Add(CelestialSchedule schedule)

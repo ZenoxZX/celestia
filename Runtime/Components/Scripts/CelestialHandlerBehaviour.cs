@@ -38,7 +38,22 @@ namespace Celestia
 
         public float PreviewProgress => m_PreviewProgress;
 
-        private CelestialEngine Engine => m_Engine ??= new CelestialEngine(ResolveClock(), m_Preset);
+        private CelestialEngine Engine
+        {
+            get
+            {
+                // Created once and reused. Rebuilding it here would silently
+                // drop every subscription taken before this point, which is
+                // exactly what happens when another component's OnEnable runs
+                // first.
+                if (m_Engine == null)
+                {
+                    m_Engine = new CelestialEngine(ResolveClock(), m_Preset);
+                }
+
+                return m_Engine;
+            }
+        }
 
         private void OnEnable()
         {
@@ -51,8 +66,11 @@ namespace Celestia
                 return;
             }
 
-            m_Engine = new CelestialEngine(clock, m_Preset);
-            m_Engine.Bind();
+            // The engine may have been built before the clock existed, so
+            // refresh both before binding.
+            Engine.Clock = clock;
+            Engine.Preset = m_Preset;
+            Engine.Bind();
         }
 
         private void OnDisable()

@@ -5,7 +5,7 @@ namespace Celestia
 {
     public sealed class CelestialEngine : ICelestialSource, IDisposable
     {
-        private readonly IWorldClock m_Clock;
+        private IWorldClock m_Clock;
 
         private CelestialPreset m_Preset;
         private CelestialState m_State;
@@ -20,6 +20,22 @@ namespace Celestia
         }
 
         public CelestialState State => m_State;
+
+        public IWorldClock Clock
+        {
+            get => m_Clock;
+            set
+            {
+                if (ReferenceEquals(m_Clock, value)) return;
+
+                bool wasBound = m_Bound;
+                if (wasBound) Unbind();
+
+                m_Clock = value;
+
+                if (wasBound) Bind();
+            }
+        }
 
         public CelestialPreset Preset
         {

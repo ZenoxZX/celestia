@@ -4,6 +4,8 @@ Time of day simulation for Unity. A single clock drives physically derived sun
 and moon positions, which in turn drive directional lights, shadow handover and
 post processing.
 
+![A full day cycle running in the editor](.github/celestia-preview.gif)
+
 ## Installation (Package Manager — Git URL)
 
 1. Open **Window → Package Manager**.

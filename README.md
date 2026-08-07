@@ -116,6 +116,47 @@ intensity is disabled outright so it costs no shadow work.
 
 Moon intensity is scaled by illumination, so a new moon goes dark on its own.
 
+## Scheduling
+
+`CelestialScheduler` runs actions at a time of day, at a sky event, across a
+range, or on an interval. In the inspector each entry pairs a trigger with a
+`UnityEvent`, so anything reachable from there works — `SetActive`, `enabled`
+flags, your own methods.
+
+The same schedules can be built from code:
+
+```csharp
+var scheduler = GetComponent<CelestialScheduler>();
+
+scheduler.At(19, 42, () => lamps.SetActive(true));
+scheduler.On(SkyEvent.Sunrise, () => lamps.SetActive(false));
+scheduler.Every(ScheduleInterval.EveryHour, ChimeBell);
+
+scheduler.Between(
+    new TimeOfDay(19, 0), new TimeOfDay(6, 0),
+    entered: () => streetLights.SetActive(true),
+    exited:  () => streetLights.SetActive(false));
+```
+
+Each call returns the schedule, so it can be adjusted or removed later:
+
+```csharp
+var curfew = scheduler.At(23, 0, LockGates);
+curfew.Once = true;
+
+scheduler.Find("19:42").Enabled = false;
+scheduler.Remove(curfew);
+```
+
+Adding or removing schedules from inside a callback is safe.
+
+Triggers are matched against the span of time covered since the previous frame,
+not against the current instant, so nothing is missed when the clock runs fast.
+
+`WorldClock` exposes a static `Active` property holding the first clock that
+enabled itself. Leave a scheduler's clock field empty to use it. The events
+themselves stay per-instance, so several clocks can coexist.
+
 ## Requirements
 
 - Unity 6000.3 or newer

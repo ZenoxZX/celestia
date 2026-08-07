@@ -20,6 +20,8 @@ namespace Celestia
 
         [SerializeField] private List<CelestialSchedule> m_Schedules = new List<CelestialSchedule>();
 
+        private readonly List<CelestialSchedule> m_Buffer = new List<CelestialSchedule>();
+
         private WorldClock m_BoundClock;
         private Func<SkyEvent, float> m_ResolveSkyEvent;
 
@@ -56,20 +58,65 @@ namespace Celestia
             m_BoundClock = null;
         }
 
-        public void AddSchedule(CelestialSchedule schedule)
+        public CelestialSchedule Add(CelestialSchedule schedule)
         {
-            if (schedule == null) return;
+            if (schedule == null) return null;
 
             m_Schedules.Add(schedule);
 
-            if (m_BoundClock == null) return;
+            if (m_BoundClock == null) return schedule;
+
+            m_ResolveSkyEvent ??= ResolveSkyEvent;
             schedule.ResetState();
             schedule.Prime(m_BoundClock.DayProgress, m_ResolveSkyEvent);
+
+            return schedule;
         }
 
-        public bool RemoveSchedule(CelestialSchedule schedule)
+        public CelestialSchedule At(TimeOfDay time, Action action)
+        {
+            return Add(CelestialSchedule.At(time, action));
+        }
+
+        public CelestialSchedule At(int hour, int minute, Action action)
+        {
+            return Add(CelestialSchedule.At(hour, minute, action));
+        }
+
+        public CelestialSchedule On(SkyEvent skyEvent, Action action)
+        {
+            return Add(CelestialSchedule.On(skyEvent, action));
+        }
+
+        public CelestialSchedule Between(TimeOfDay start, TimeOfDay end,
+                                         Action entered, Action exited = null)
+        {
+            return Add(CelestialSchedule.Between(start, end, entered, exited));
+        }
+
+        public CelestialSchedule Every(ScheduleInterval interval, Action action)
+        {
+            return Add(CelestialSchedule.Every(interval, action));
+        }
+
+        public bool Remove(CelestialSchedule schedule)
         {
             return m_Schedules.Remove(schedule);
+        }
+
+        public void Clear()
+        {
+            m_Schedules.Clear();
+        }
+
+        public CelestialSchedule Find(string label)
+        {
+            for (int i = 0; i < m_Schedules.Count; i++)
+            {
+                if (m_Schedules[i].Label == label) return m_Schedules[i];
+            }
+
+            return null;
         }
 
         public float ResolveSkyEvent(SkyEvent skyEvent)
@@ -144,10 +191,16 @@ namespace Celestia
 
         private void OnAdvanced(ClockAdvance advance)
         {
-            for (int i = 0; i < m_Schedules.Count; i++)
+            // Callbacks may add or remove schedules, so iterate a snapshot.
+            m_Buffer.Clear();
+            m_Buffer.AddRange(m_Schedules);
+
+            for (int i = 0; i < m_Buffer.Count; i++)
             {
-                m_Schedules[i].Evaluate(advance, m_ResolveSkyEvent);
+                m_Buffer[i].Evaluate(advance, m_ResolveSkyEvent);
             }
+
+            m_Buffer.Clear();
         }
     }
 }

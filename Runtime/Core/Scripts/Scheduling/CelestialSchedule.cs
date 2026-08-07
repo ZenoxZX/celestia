@@ -32,9 +32,77 @@ namespace Celestia
         private bool m_Inside;
         private bool m_HasInsideState;
 
-        public string Label => m_Label;
+        public event Action Fired;
+        public event Action Left;
 
-        public bool Enabled => m_Enabled;
+        public CelestialSchedule()
+        {
+        }
+
+        public static CelestialSchedule At(TimeOfDay time, Action action = null)
+        {
+            var schedule = Create(ScheduleTrigger.TimeOfDay, action);
+            schedule.m_Time = time;
+            schedule.m_Label = time.ToShortString();
+            return schedule;
+        }
+
+        public static CelestialSchedule At(int hour, int minute, Action action = null)
+        {
+            return At(new TimeOfDay(hour, minute), action);
+        }
+
+        public static CelestialSchedule On(SkyEvent skyEvent, Action action = null)
+        {
+            var schedule = Create(ScheduleTrigger.SkyEvent, action);
+            schedule.m_SkyEvent = skyEvent;
+            schedule.m_Label = skyEvent.ToString();
+            return schedule;
+        }
+
+        public static CelestialSchedule Between(TimeOfDay start, TimeOfDay end,
+                                                Action entered = null, Action exited = null)
+        {
+            var schedule = Create(ScheduleTrigger.TimeRange, entered);
+            schedule.m_RangeStart = start;
+            schedule.m_RangeEnd = end;
+            schedule.m_Label = $"{start.ToShortString()} - {end.ToShortString()}";
+
+            if (exited != null) schedule.Left += exited;
+            return schedule;
+        }
+
+        public static CelestialSchedule Every(ScheduleInterval interval, Action action = null)
+        {
+            var schedule = Create(ScheduleTrigger.Interval, action);
+            schedule.m_Interval = interval;
+            schedule.m_Label = interval.ToString();
+            return schedule;
+        }
+
+        public string Label
+        {
+            get => m_Label;
+            set => m_Label = value;
+        }
+
+        public bool Enabled
+        {
+            get => m_Enabled;
+            set => m_Enabled = value;
+        }
+
+        public bool Once
+        {
+            get => m_Once;
+            set => m_Once = value;
+        }
+
+        public bool CatchUpOnEnable
+        {
+            get => m_CatchUpOnEnable;
+            set => m_CatchUpOnEnable = value;
+        }
 
         public ScheduleTrigger Trigger => m_Trigger;
 
@@ -47,10 +115,6 @@ namespace Celestia
         public TimeOfDay RangeEnd => m_RangeEnd;
 
         public ScheduleInterval Interval => m_Interval;
-
-        public bool Once => m_Once;
-
-        public bool CatchUpOnEnable => m_CatchUpOnEnable;
 
         public bool IsInside => m_Inside;
 
@@ -72,7 +136,7 @@ namespace Celestia
             m_Inside = IsWithinRange(progress);
             m_HasInsideState = true;
 
-            if (m_Inside && m_CatchUpOnEnable) m_Triggered.Invoke();
+            if (m_Inside && m_CatchUpOnEnable) Fire();
         }
 
         public void Evaluate(in ClockAdvance advance, Func<SkyEvent, float> resolveSkyEvent)
@@ -147,7 +211,7 @@ namespace Celestia
             m_Inside = nowInside;
 
             if (nowInside) Fire();
-            else m_Exited.Invoke();
+            else Exit();
         }
 
         private bool IsWithinRange(float progress)
@@ -162,10 +226,24 @@ namespace Celestia
             return value >= start || value < end;
         }
 
+        private static CelestialSchedule Create(ScheduleTrigger trigger, Action action)
+        {
+            var schedule = new CelestialSchedule { m_Trigger = trigger };
+            if (action != null) schedule.Fired += action;
+            return schedule;
+        }
+
         private void Fire()
         {
             m_Fired = true;
-            m_Triggered.Invoke();
+            m_Triggered?.Invoke();
+            Fired?.Invoke();
+        }
+
+        private void Exit()
+        {
+            m_Exited?.Invoke();
+            Left?.Invoke();
         }
     }
 }

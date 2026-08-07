@@ -7,6 +7,7 @@ namespace Celestia.Editor
     public class CelestialSchedulePropertyDrawer : PropertyDrawer
     {
         private const float k_Spacing = 2f;
+        private const float k_ToggleWidth = 16f;
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -15,11 +16,15 @@ namespace Celestia.Editor
             SerializedProperty enabled = property.FindPropertyRelative("m_Enabled");
             SerializedProperty labelProp = property.FindPropertyRelative("m_Label");
 
-            Rect header = new Rect(position.x, position.y, position.width, LineHeight);
+            var toggle = new Rect(position.xMax - k_ToggleWidth, position.y,
+                k_ToggleWidth, LineHeight);
+
+            float headerWidth = position.width - k_ToggleWidth - k_Spacing;
+            var header = new Rect(position.x, position.y, headerWidth, LineHeight);
+
             property.isExpanded = EditorGUI.Foldout(header, property.isExpanded,
                 BuildHeader(property, labelProp), true);
 
-            Rect toggle = new Rect(position.xMax - 18f, position.y, 18f, LineHeight);
             enabled.boolValue = EditorGUI.Toggle(toggle, enabled.boolValue);
 
             if (!property.isExpanded)
@@ -27,6 +32,9 @@ namespace Celestia.Editor
                 EditorGUI.EndProperty();
                 return;
             }
+
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = wasEnabled && enabled.boolValue;
 
             EditorGUI.indentLevel++;
             float y = position.y + LineHeight + k_Spacing;
@@ -66,6 +74,7 @@ namespace Celestia.Editor
             }
 
             EditorGUI.indentLevel--;
+            GUI.enabled = wasEnabled;
             EditorGUI.EndProperty();
         }
 
@@ -133,7 +142,10 @@ namespace Celestia.Editor
             string detail = Describe(property, type);
             string name = string.IsNullOrEmpty(label.stringValue) ? "Schedule" : label.stringValue;
 
-            return new GUIContent($"{name}   ({detail})");
+            bool enabled = property.FindPropertyRelative("m_Enabled").boolValue;
+            string suffix = enabled ? string.Empty : "   — disabled";
+
+            return new GUIContent($"{name}   ({detail}){suffix}");
         }
 
         private static string Describe(SerializedProperty property, ScheduleTrigger type)

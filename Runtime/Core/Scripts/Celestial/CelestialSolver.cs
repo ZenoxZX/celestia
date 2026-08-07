@@ -159,6 +159,41 @@ namespace Celestia
             return Mathf.Clamp01((float)normalized);
         }
 
+        public static bool SunCrossing(double altitudeDegrees, double yearProgress,
+                                       double latitudeDegrees,
+                                       out double risingProgress, out double settingProgress)
+        {
+            double declination = SunDeclination(yearProgress);
+            return Crossing(altitudeDegrees, declination, 0.0, latitudeDegrees,
+                out risingProgress, out settingProgress);
+        }
+
+        public static bool MoonCrossing(double altitudeDegrees, double yearProgress,
+                                        double moonPhase, double latitudeDegrees,
+                                        out double risingProgress, out double settingProgress)
+        {
+            double sunLongitude = SunEclipticLongitude(yearProgress);
+            double moonLongitude = MoonEclipticLongitude(yearProgress, moonPhase);
+            double declination = EclipticToDeclination(moonLongitude);
+            double rightAscensionOffset = NormalizeSigned(
+                EclipticToRightAscension(moonLongitude) - EclipticToRightAscension(sunLongitude));
+
+            return Crossing(altitudeDegrees, declination, rightAscensionOffset, latitudeDegrees,
+                out risingProgress, out settingProgress);
+        }
+
+        public static double TransitProgress(double yearProgress, double moonPhase, bool isSun)
+        {
+            if (isSun) return 0.5;
+
+            double sunLongitude = SunEclipticLongitude(yearProgress);
+            double moonLongitude = MoonEclipticLongitude(yearProgress, moonPhase);
+            double offset = NormalizeSigned(
+                EclipticToRightAscension(moonLongitude) - EclipticToRightAscension(sunLongitude));
+
+            return WrapUnit(0.5 + offset / 360.0);
+        }
+
         public static float SkyPhase(double sunAltitudeDegrees)
         {
             double span = k_ZenithDegrees - k_AstronomicalNightDegrees;
@@ -186,6 +221,39 @@ namespace Celestia
         public static double NormalizeSigned(double degrees)
         {
             return ((degrees + 540.0) % 360.0) - 180.0;
+        }
+
+        private static bool Crossing(double altitudeDegrees, double declinationDegrees,
+                                     double rightAscensionOffset, double latitudeDegrees,
+                                     out double risingProgress, out double settingProgress)
+        {
+            double lat = latitudeDegrees * k_Deg2Rad;
+            double decl = declinationDegrees * k_Deg2Rad;
+            double target = altitudeDegrees * k_Deg2Rad;
+
+            double cosH = (Math.Sin(target) - Math.Sin(lat) * Math.Sin(decl))
+                        / (Math.Cos(lat) * Math.Cos(decl) + k_DivisionGuard);
+
+            if (cosH < -1.0 || cosH > 1.0)
+            {
+                risingProgress = 0.0;
+                settingProgress = 0.0;
+                return false;
+            }
+
+            double hourAngle = Math.Acos(cosH) * k_Rad2Deg;
+            double transit = 0.5 + rightAscensionOffset / 360.0;
+            double halfSpan = hourAngle / 360.0;
+
+            risingProgress = WrapUnit(transit - halfSpan);
+            settingProgress = WrapUnit(transit + halfSpan);
+            return true;
+        }
+
+        private static double WrapUnit(double value)
+        {
+            double wrapped = value % 1.0;
+            return wrapped < 0.0 ? wrapped + 1.0 : wrapped;
         }
 
         private static double Clamp(double value)

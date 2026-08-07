@@ -31,7 +31,12 @@ namespace Celestia
         private int m_LastMinute = -1;
         private int m_LastHour = -1;
 
+        public static WorldClock Active => s_Active;
+
+        private static WorldClock s_Active;
+
         public event Action<float> ProgressChanged;
+        public event Action<ClockAdvance> Advanced;
         public event Action<TimeOfDay> SecondChanged;
         public event Action<TimeOfDay> MinuteChanged;
         public event Action<TimeOfDay> HourChanged;
@@ -69,6 +74,16 @@ namespace Celestia
             m_Progress = Mathf.Repeat(m_StartProgress, 1f);
             m_IsRunning = m_PlayOnAwake;
             CacheBoundaries();
+        }
+
+        private void OnEnable()
+        {
+            if (s_Active == null) s_Active = this;
+        }
+
+        private void OnDisable()
+        {
+            if (s_Active == this) s_Active = null;
         }
 
         private void Update()
@@ -149,6 +164,7 @@ namespace Celestia
 
         private void Advance(double dayFraction)
         {
+            double from = m_Progress;
             double target = m_Progress + dayFraction;
 
             int dayRollovers = (int)Math.Floor(target);
@@ -160,6 +176,9 @@ namespace Celestia
 
             m_Progress = target;
             ProgressChanged?.Invoke((float)m_Progress);
+
+            Advanced?.Invoke(new ClockAdvance(
+                from, m_Progress, dayFraction, Math.Max(0, dayRollovers)));
 
             EmitBoundaryEvents(dayFraction);
 

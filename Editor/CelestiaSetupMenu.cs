@@ -10,7 +10,7 @@ namespace Celestia.Editor
         private const string k_SunName = "Sun Light";
         private const string k_MoonName = "Moon Light";
 
-        public static event Action<GameObject, CelestialHandler> RigCreated;
+        public static event Action<GameObject, CelestialHandlerBehaviour> RigCreated;
 
         [MenuItem("GameObject/Celestia/Sky Rig", false, 10)]
         public static void CreateSkyRig(MenuCommand command)
@@ -18,9 +18,9 @@ namespace Celestia.Editor
             var root = new GameObject(k_RootName);
             GameObjectUtility.SetParentAndAlign(root, command.context as GameObject);
 
-            WorldClock clock = root.AddComponent<WorldClock>();
-            CelestialHandler handler = root.AddComponent<CelestialHandler>();
-            CelestialLightBinder binder = root.AddComponent<CelestialLightBinder>();
+            WorldClockBehaviour clock = root.AddComponent<WorldClockBehaviour>();
+            CelestialHandlerBehaviour handler = root.AddComponent<CelestialHandlerBehaviour>();
+            CelestialLightBinderBehaviour binder = root.AddComponent<CelestialLightBinderBehaviour>();
 
             Light sun = CreateLight(root.transform, k_SunName, 3f);
             Light moon = CreateLight(root.transform, k_MoonName, 0.4f);
@@ -34,6 +34,12 @@ namespace Celestia.Editor
             serializedBinder.FindProperty(CelestiaSerializedNames.SunLight).objectReferenceValue = sun;
             serializedBinder.FindProperty(CelestiaSerializedNames.MoonLight).objectReferenceValue = moon;
             serializedBinder.ApplyModifiedPropertiesWithoutUndo();
+
+            CelestialSchedulerBehaviour scheduler = root.AddComponent<CelestialSchedulerBehaviour>();
+            var serializedScheduler = new SerializedObject(scheduler);
+            serializedScheduler.FindProperty(CelestiaSerializedNames.Clock).objectReferenceValue = clock;
+            serializedScheduler.FindProperty(CelestiaSerializedNames.Handler).objectReferenceValue = handler;
+            serializedScheduler.ApplyModifiedPropertiesWithoutUndo();
 
             RigCreated?.Invoke(root, handler);
 

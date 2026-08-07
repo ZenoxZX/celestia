@@ -19,7 +19,7 @@ namespace Celestia.Editor
             CelestiaSetupMenu.RigCreated += OnRigCreated;
         }
 
-        private static void OnRigCreated(GameObject root, CelestialHandler handler)
+        private static void OnRigCreated(GameObject root, CelestialHandlerBehaviour handler)
         {
             var volumeObject = new GameObject(k_VolumeName);
             volumeObject.transform.SetParent(root.transform, false);

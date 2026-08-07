@@ -1,11 +1,9 @@
 {
-    "name": "Celestia.PostProcessing",
-    "rootNamespace": "Celestia.PostProcessing",
+    "name": "Celestia.VContainer",
+    "rootNamespace": "Celestia.VContainer",
     "references": [
         "Celestia.Runtime",
-        "Unity.RenderPipelines.Core.Runtime",
-        "Unity.RenderPipelines.Universal.Runtime",
-        "Celestia.Components"
+        "VContainer"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -14,13 +12,13 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [
-        "CELESTIA_URP"
+        "CELESTIA_VCONTAINER"
     ],
     "versionDefines": [
         {
-            "name": "com.unity.render-pipelines.universal",
+            "name": "jp.hadashikick.vcontainer",
             "expression": "",
-            "define": "CELESTIA_URP"
+            "define": "CELESTIA_VCONTAINER"
         }
     ],
     "noEngineReferences": false

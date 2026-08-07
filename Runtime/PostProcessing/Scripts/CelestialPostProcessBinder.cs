@@ -8,7 +8,7 @@ namespace Celestia.PostProcessing
     [DisallowMultipleComponent]
     public class CelestialPostProcessBinder : MonoBehaviour
     {
-        [SerializeField] private CelestialHandler m_Handler;
+        [SerializeField] private CelestialHandlerBehaviour m_Handler;
 
         [Header("Volume")]
         [Tooltip("Leave empty to fall back to a Volume on this GameObject.")]

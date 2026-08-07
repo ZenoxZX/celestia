@@ -139,6 +139,17 @@ namespace Celestia
             if (m_Inside && m_CatchUpOnEnable) Fire();
         }
 
+        public void Resync(float progress)
+        {
+            if (m_Trigger != ScheduleTrigger.TimeRange) return;
+
+            // The clock jumped, so realign the inside/outside state without
+            // firing the enter or exit event for a transition that never
+            // happened in play.
+            m_Inside = IsWithinRange(progress);
+            m_HasInsideState = true;
+        }
+
         public void Evaluate(in ClockAdvance advance, Func<SkyEvent, float> resolveSkyEvent)
         {
             if (!m_Enabled) return;

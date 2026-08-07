@@ -4,58 +4,52 @@ using UnityEngine;
 
 namespace Celestia
 {
-    [AddComponentMenu("Celestia/Celestial Scheduler")]
-    [DisallowMultipleComponent]
-    public class CelestialScheduler : MonoBehaviour
+    public sealed class ScheduleRunner : IScheduleRunner, IDisposable
     {
         private const double k_GoldenHourAltitude = 6.0;
         private const double k_CivilTwilightAltitude = -6.0;
         private const double k_HorizonAltitude = 0.0;
 
-        [Tooltip("Leave empty to use the first active WorldClock in the scene.")]
-        [SerializeField] private WorldClock m_Clock;
-
-        [Tooltip("Needed only by Sky Event schedules, which read latitude and season from it.")]
-        [SerializeField] private CelestialHandler m_Handler;
-
-        [SerializeField] private List<CelestialSchedule> m_Schedules = new List<CelestialSchedule>();
-
+        private readonly List<CelestialSchedule> m_Schedules = new List<CelestialSchedule>();
         private readonly List<CelestialSchedule> m_Buffer = new List<CelestialSchedule>();
+        private readonly Func<SkyEvent, float> m_ResolveSkyEvent;
 
-        private WorldClock m_BoundClock;
-        private Func<SkyEvent, float> m_ResolveSkyEvent;
+        private readonly IWorldClock m_Clock;
+        private readonly ICelestialSource m_Source;
+
+        private bool m_Bound;
+
+        public ScheduleRunner(IWorldClock clock, ICelestialSource source)
+        {
+            m_Clock = clock;
+            m_Source = source;
+            m_ResolveSkyEvent = ResolveSkyEvent;
+        }
 
         public IReadOnlyList<CelestialSchedule> Schedules => m_Schedules;
 
-        public WorldClock BoundClock => m_BoundClock;
-
-        private void OnEnable()
+        public void Bind()
         {
-            m_ResolveSkyEvent ??= ResolveSkyEvent;
-            m_BoundClock = m_Clock != null ? m_Clock : WorldClock.Active;
-
-            if (m_BoundClock == null)
-            {
-                Debug.LogError(
-                    $"{nameof(CelestialScheduler)} on '{name}' found no {nameof(WorldClock)}.", this);
-                return;
-            }
+            if (m_Bound || m_Clock == null) return;
 
             for (int i = 0; i < m_Schedules.Count; i++)
             {
                 m_Schedules[i].ResetState();
-                m_Schedules[i].Prime(m_BoundClock.DayProgress, m_ResolveSkyEvent);
+                m_Schedules[i].Prime(m_Clock.DayProgress, m_ResolveSkyEvent);
             }
 
-            m_BoundClock.Advanced += OnAdvanced;
+            m_Clock.Advanced += OnAdvanced;
+            m_Clock.Resynced += OnResynced;
+            m_Bound = true;
         }
 
-        private void OnDisable()
+        public void Unbind()
         {
-            if (m_BoundClock == null) return;
+            if (!m_Bound) return;
 
-            m_BoundClock.Advanced -= OnAdvanced;
-            m_BoundClock = null;
+            m_Clock.Advanced -= OnAdvanced;
+            m_Clock.Resynced -= OnResynced;
+            m_Bound = false;
         }
 
         public CelestialSchedule Add(CelestialSchedule schedule)
@@ -64,12 +58,10 @@ namespace Celestia
 
             m_Schedules.Add(schedule);
 
-            if (m_BoundClock == null) return schedule;
+            if (m_Clock == null) return schedule;
 
-            m_ResolveSkyEvent ??= ResolveSkyEvent;
             schedule.ResetState();
-            schedule.Prime(m_BoundClock.DayProgress, m_ResolveSkyEvent);
-
+            schedule.Prime(m_Clock.DayProgress, m_ResolveSkyEvent);
             return schedule;
         }
 
@@ -121,12 +113,12 @@ namespace Celestia
 
         public float ResolveSkyEvent(SkyEvent skyEvent)
         {
-            CelestialPreset preset = m_Handler != null ? m_Handler.Preset : null;
+            CelestialPreset preset = m_Source?.Preset;
             if (preset == null)
             {
                 Debug.LogError(
-                    $"{nameof(CelestialScheduler)} on '{name}' needs a handler with a preset " +
-                    "to resolve sky events.", this);
+                    $"{nameof(ScheduleRunner)} needs a celestial source with a preset " +
+                    "to resolve sky events.");
                 return -1f;
             }
 
@@ -171,6 +163,11 @@ namespace Celestia
             }
         }
 
+        void IDisposable.Dispose()
+        {
+            Unbind();
+        }
+
         private static float SunCrossing(double altitude, double year, double latitude, bool rising)
         {
             bool crosses = CelestialSolver.SunCrossing(altitude, year, latitude,
@@ -191,13 +188,25 @@ namespace Celestia
 
         private void OnAdvanced(ClockAdvance advance)
         {
-            // Callbacks may add or remove schedules, so iterate a snapshot.
             m_Buffer.Clear();
             m_Buffer.AddRange(m_Schedules);
 
             for (int i = 0; i < m_Buffer.Count; i++)
             {
                 m_Buffer[i].Evaluate(advance, m_ResolveSkyEvent);
+            }
+
+            m_Buffer.Clear();
+        }
+
+        private void OnResynced(float progress)
+        {
+            m_Buffer.Clear();
+            m_Buffer.AddRange(m_Schedules);
+
+            for (int i = 0; i < m_Buffer.Count; i++)
+            {
+                m_Buffer[i].Resync(progress);
             }
 
             m_Buffer.Clear();

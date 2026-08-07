@@ -3,45 +3,43 @@ using UnityEngine;
 
 namespace Celestia
 {
-    [AddComponentMenu("Celestia/World Clock")]
-    [DisallowMultipleComponent]
-    public class WorldClock : MonoBehaviour
+    public class WorldClock : IWorldClock
     {
-        private const float k_MinRealSecondsPerDay = 0.01f;
+        public const float MinRealSecondsPerDay = 0.01f;
+
         private const int k_MaxSecondEventsPerTick = 600;
         private const int k_MaxMinuteEventsPerTick = TimeOfDay.MinutesPerHour * TimeOfDay.HoursPerDay;
         private const int k_MaxHourEventsPerTick = TimeOfDay.HoursPerDay;
 
-        [Header("Tick")]
-        [SerializeField] private ClockTickMode m_TickMode = ClockTickMode.SelfTick;
-        [SerializeField] private bool m_PlayOnAwake = true;
-        [SerializeField] private bool m_UseUnscaledTime;
-
-        [Header("Speed")]
-        [SerializeField, Min(k_MinRealSecondsPerDay)] private float m_RealSecondsPerDay = 120f;
-        [SerializeField, Min(0f)] private float m_TimeScale = 1f;
-
-        [Header("Start")]
-        [SerializeField, Range(0f, 1f)] private float m_StartProgress = 0.20834f;
-
         private double m_Progress;
+        private float m_RealSecondsPerDay = 120f;
+        private float m_TimeScale = 1f;
         private int m_DayCount;
         private bool m_IsRunning;
         private int m_LastSecond = -1;
         private int m_LastMinute = -1;
         private int m_LastHour = -1;
 
-        public static WorldClock Active => s_Active;
-
-        private static WorldClock s_Active;
-
         public event Action<float> ProgressChanged;
         public event Action<ClockAdvance> Advanced;
+        public event Action<float> Resynced;
         public event Action<TimeOfDay> SecondChanged;
         public event Action<TimeOfDay> MinuteChanged;
         public event Action<TimeOfDay> HourChanged;
         public event Action<int> DayElapsed;
         public event Action<bool> RunStateChanged;
+
+        public WorldClock()
+        {
+        }
+
+        public WorldClock(float realSecondsPerDay, float startProgress, bool running = true)
+        {
+            m_RealSecondsPerDay = Mathf.Max(MinRealSecondsPerDay, realSecondsPerDay);
+            m_Progress = WrapProgress(startProgress);
+            m_IsRunning = running;
+            CacheBoundaries();
+        }
 
         public float DayProgress => (float)m_Progress;
 
@@ -50,12 +48,6 @@ namespace Celestia
         public int DayCount => m_DayCount;
 
         public bool IsRunning => m_IsRunning;
-
-        public ClockTickMode TickMode
-        {
-            get => m_TickMode;
-            set => m_TickMode = value;
-        }
 
         public float TimeScale
         {
@@ -66,47 +58,22 @@ namespace Celestia
         public float RealSecondsPerDay
         {
             get => m_RealSecondsPerDay;
-            set => m_RealSecondsPerDay = Mathf.Max(k_MinRealSecondsPerDay, value);
-        }
-
-        private void Awake()
-        {
-            m_Progress = Mathf.Repeat(m_StartProgress, 1f);
-            m_IsRunning = m_PlayOnAwake;
-            CacheBoundaries();
-        }
-
-        private void OnEnable()
-        {
-            if (s_Active == null) s_Active = this;
-        }
-
-        private void OnDisable()
-        {
-            if (s_Active == this) s_Active = null;
-        }
-
-        private void Update()
-        {
-            if (m_TickMode != ClockTickMode.SelfTick) return;
-
-            float delta = m_UseUnscaledTime
-                ? UnityEngine.Time.unscaledDeltaTime
-                : UnityEngine.Time.deltaTime;
-
-            Tick(delta);
+            set => m_RealSecondsPerDay = Mathf.Max(MinRealSecondsPerDay, value);
         }
 
         public void Play()
         {
             if (m_IsRunning) return;
+
             m_IsRunning = true;
+            CacheBoundaries();
             RunStateChanged?.Invoke(true);
         }
 
         public void Pause()
         {
             if (!m_IsRunning) return;
+
             m_IsRunning = false;
             RunStateChanged?.Invoke(false);
         }
@@ -144,22 +111,34 @@ namespace Celestia
             StepSeconds(hours * TimeOfDay.SecondsPerHour);
         }
 
-        public void SetProgress(float progress)
+        public void SetProgress(float progress, TimeChangeMode mode = TimeChangeMode.Resync)
         {
-            double wrapped = WrapProgress(progress);
-            m_Progress = wrapped;
+            double target = WrapProgress(progress);
+
+            if (mode == TimeChangeMode.Replay)
+            {
+                double distance = target - m_Progress;
+                if (distance < 0d) distance += 1d;
+                if (distance > 0d) Advance(distance);
+                return;
+            }
+
+            m_Progress = target;
             CacheBoundaries();
+
             ProgressChanged?.Invoke((float)m_Progress);
+            Resynced?.Invoke((float)m_Progress);
         }
 
-        public void SetTime(int hour, int minute, int second = 0)
+        public void SetTime(TimeOfDay time, TimeChangeMode mode = TimeChangeMode.Resync)
         {
-            SetProgress(new TimeOfDay(hour, minute, second).Progress);
+            SetProgress(time.Progress, mode);
         }
 
-        public void SetTime(TimeOfDay time)
+        public void SetTime(int hour, int minute, int second = 0,
+                            TimeChangeMode mode = TimeChangeMode.Resync)
         {
-            SetProgress(time.Progress);
+            SetProgress(new TimeOfDay(hour, minute, second).Progress, mode);
         }
 
         private void Advance(double dayFraction)
@@ -260,18 +239,5 @@ namespace Celestia
             double wrapped = progress % 1d;
             return wrapped < 0d ? wrapped + 1d : wrapped;
         }
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            m_RealSecondsPerDay = Mathf.Max(k_MinRealSecondsPerDay, m_RealSecondsPerDay);
-            m_TimeScale = Mathf.Max(0f, m_TimeScale);
-
-            if (!Application.isPlaying)
-            {
-                m_Progress = Mathf.Repeat(m_StartProgress, 1f);
-            }
-        }
-#endif
     }
 }

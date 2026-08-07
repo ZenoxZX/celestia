@@ -157,10 +157,81 @@ not against the current instant, so nothing is missed when the clock runs fast.
 enabled itself. Leave a scheduler's clock field empty to use it. The events
 themselves stay per-instance, so several clocks can coexist.
 
+## Changing the time from outside
+
+`SetProgress` and `SetTime` take a mode:
+
+```csharp
+clock.SetProgress(0.27f);                          // Resync (default)
+clock.SetProgress(0.27f, TimeChangeMode.Replay);   // walk through the span
+```
+
+`Resync` moves the clock and realigns every listener without pretending time
+passed — no hour events, no range enter/exit for a transition that never
+happened. It raises `Resynced` so schedules can re-evaluate which range they
+sit in. Use it when another system owns the time.
+
+`Replay` treats the jump as elapsed time: boundary events fire, ranges
+transition, day counters advance. Use it for sleep or fast-forward mechanics.
+
+Both work while paused, so a save-load or cutscene can set the time and resume
+cleanly.
+
+## VContainer
+
+The package works without VContainer. When the package is present an extra
+assembly compiles in, and the same core classes can be used without a single
+MonoBehaviour.
+
+```csharp
+public class GameLifetimeScope : LifetimeScope
+{
+    [SerializeField] private CelestiaConfig m_Celestia;
+
+    protected override void Configure(IContainerBuilder builder)
+    {
+        new CelestiaInstaller(m_Celestia).Install(builder);
+    }
+}
+```
+
+Then inject anywhere:
+
+```csharp
+public class DayNightUI : IStartable
+{
+    private readonly IWorldClock m_Clock;
+    private readonly IScheduleRunner m_Schedules;
+
+    [Inject]
+    public DayNightUI(IWorldClock clock, IScheduleRunner schedules)
+    {
+        m_Clock = clock;
+        m_Schedules = schedules;
+    }
+
+    void IStartable.Start()
+    {
+        m_Schedules.On(SkyEvent.Sunset, () => Debug.Log("dusk"));
+    }
+}
+```
+
+`CelestiaConfig` is a ScriptableObject holding the preset, clock speed and
+light references. Leave the `Sun Light` and `Moon Light` fields empty and the
+installer creates a directional light pair at runtime, destroying only what it
+created when the scope is disposed. Assign them and the scene lights are used
+untouched.
+
+The registered services are `IWorldClock`, `ICelestialSource`,
+`IScheduleRunner` and `ICelestiaLightProvider`, plus a `CelestiaRuntime` entry
+point that ticks the clock through VContainer's player loop.
+
 ## Requirements
 
 - Unity 6000.3 or newer
 - Universal Render Pipeline — optional, only needed for post processing
+- VContainer — optional, only needed for the DI integration
 
 ## License
 

@@ -1,13 +1,10 @@
 {
-    "name": "Celestia.Editor",
-    "rootNamespace": "Celestia.Editor",
+    "name": "Celestia.Components",
+    "rootNamespace": "Celestia",
     "references": [
-        "Celestia.Runtime",
-        "Celestia.Components"
+        "Celestia.Runtime"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

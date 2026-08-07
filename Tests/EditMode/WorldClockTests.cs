@@ -6,25 +6,13 @@ namespace Celestia.Tests
 {
     public class WorldClockTests
     {
-        private GameObject m_Host;
         private WorldClock m_Clock;
 
         [SetUp]
         public void SetUp()
         {
-            m_Host = new GameObject("WorldClockTestHost");
-            m_Clock = m_Host.AddComponent<WorldClock>();
-            m_Clock.TickMode = ClockTickMode.ExternalTick;
-            m_Clock.RealSecondsPerDay = TimeOfDay.SecondsPerDay;
+            m_Clock = new WorldClock(TimeOfDay.SecondsPerDay, 0f);
             m_Clock.TimeScale = 1f;
-            m_Clock.SetProgress(0f);
-            m_Clock.Play();
-        }
-
-        [TearDown]
-        public void TearDown()
-        {
-            Object.DestroyImmediate(m_Host);
         }
 
         [Test]

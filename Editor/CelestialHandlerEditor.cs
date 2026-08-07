@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Celestia.Editor
 {
-    [CustomEditor(typeof(CelestialHandler))]
+    [CustomEditor(typeof(CelestialHandlerBehaviour))]
     public class CelestialHandlerEditor : UnityEditor.Editor
     {
         private const float k_DomeRadius = 15f;
@@ -24,7 +24,7 @@ namespace Celestia.Editor
         {
             DrawDefaultInspector();
 
-            var handler = (CelestialHandler)target;
+            var handler = (CelestialHandlerBehaviour)target;
             if (handler.Preset == null)
             {
                 EditorGUILayout.HelpBox("Assign a CelestialPreset to preview the sky.", MessageType.Warning);
@@ -35,11 +35,11 @@ namespace Celestia.Editor
             DrawReadout(handler);
         }
 
-        private static void DrawReadout(CelestialHandler handler)
+        private static void DrawReadout(CelestialHandlerBehaviour handler)
         {
             CelestialState state = Application.isPlaying
                 ? handler.State
-                : CelestialHandler.Sample(handler.Preset, handler.PreviewProgress);
+                : CelestialEngine.Sample(handler.Preset, handler.PreviewProgress);
 
             float progress = ResolveProgress(handler);
 
@@ -74,7 +74,7 @@ namespace Celestia.Editor
             }
         }
 
-        private static float ResolveProgress(CelestialHandler handler)
+        private static float ResolveProgress(CelestialHandlerBehaviour handler)
         {
             return Application.isPlaying
                 ? handler.State.DayProgress
@@ -92,7 +92,7 @@ namespace Celestia.Editor
         }
 
         [DrawGizmo(GizmoType.Selected | GizmoType.Active)]
-        private static void DrawGizmos(CelestialHandler handler, GizmoType gizmoType)
+        private static void DrawGizmos(CelestialHandlerBehaviour handler, GizmoType gizmoType)
         {
             CelestialPreset preset = handler.Preset;
             if (preset == null) return;
@@ -105,7 +105,7 @@ namespace Celestia.Editor
             DrawArc(origin, preset, true, s_SunArcColor);
             DrawArc(origin, preset, false, s_MoonArcColor);
 
-            CelestialState state = CelestialHandler.Sample(preset, progress);
+            CelestialState state = CelestialEngine.Sample(preset, progress);
             DrawBody(origin, state.SunDirection, state.SunAltitude, s_SunArcColor, "Sun");
             DrawBody(origin, state.MoonDirection, state.MoonAltitude, s_MoonArcColor, "Moon");
         }

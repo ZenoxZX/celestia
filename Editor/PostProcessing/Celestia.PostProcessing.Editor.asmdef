@@ -6,7 +6,8 @@
         "Celestia.Editor",
         "Celestia.PostProcessing",
         "Unity.RenderPipelines.Core.Runtime",
-        "Unity.RenderPipelines.Universal.Runtime"
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Celestia.Components"
     ],
     "includePlatforms": [
         "Editor"

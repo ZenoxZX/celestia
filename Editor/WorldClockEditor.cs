@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Celestia.Editor
 {
-    [CustomEditor(typeof(WorldClock))]
+    [CustomEditor(typeof(WorldClockBehaviour))]
     public class WorldClockEditor : UnityEditor.Editor
     {
         public override bool RequiresConstantRepaint()
@@ -15,7 +15,7 @@ namespace Celestia.Editor
         {
             DrawDefaultInspector();
 
-            var clock = (WorldClock)target;
+            var clock = (WorldClockBehaviour)target;
 
             EditorGUILayout.Space();
 
@@ -39,7 +39,7 @@ namespace Celestia.Editor
             DrawJumpButtons(clock);
         }
 
-        private static void DrawTransport(WorldClock clock)
+        private static void DrawTransport(IWorldClock clock)
         {
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -50,7 +50,7 @@ namespace Celestia.Editor
             }
         }
 
-        private static void DrawJumpButtons(WorldClock clock)
+        private static void DrawJumpButtons(IWorldClock clock)
         {
             using (new EditorGUILayout.HorizontalScope())
             {

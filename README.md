@@ -1,10 +1,8 @@
-# Celestia
+<img src=".github/celestia-logo.png" alt="Celestia" width="480">
 
 Time of day simulation for Unity. A single clock drives physically derived sun
 and moon positions, which in turn drive directional lights, shadow handover and
 post processing.
-
-![A full day cycle running in the editor](.github/celestia-preview.gif)
 
 ## Installation (Package Manager — Git URL)
 
@@ -44,6 +42,8 @@ it is not, so nothing has to be installed first.
 3. Set the latitude, season and moon phase on the preset. Press play.
 
 ## How it works
+
+![A full day cycle running in the editor](.github/celestia-preview.gif)
 
 `WorldClock` keeps the day as a `0..1` progress value and raises events as
 seconds, minutes, hours and days roll over. It ticks itself or accepts an
